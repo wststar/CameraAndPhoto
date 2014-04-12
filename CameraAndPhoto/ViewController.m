@@ -21,6 +21,26 @@
 	// Do any additional setup after loading the view, typically from a nib.
 }
 
+/**
+ *	@brief	保存图片后回调
+ *
+ *	@param 	paramImage 	图片信息
+ *	@param 	paramError 错误信息
+ *  @param  paramContextInfo
+ 
+ */
+-(void)imageWasSavedSuccessfully:(UIImage *)paramImage
+        didFinishSavingWithError:(NSError *)paramError
+                     contextInfo:(void *)paramContextInfo{
+    if (paramError == nil){
+        NSLog(@"Image was saved successfully.");
+    }else{
+        NSLog(@"An error happened while saving the image.");
+        NSLog(@"Error = %@", paramError);
+    }
+}
+
+
 -(void)viewDidAppear:(BOOL)animated{
     [super viewDidAppear:animated];
     
@@ -36,18 +56,18 @@
         controller.sourceType = UIImagePickerControllerSourceTypeCamera;
         
         //照片
-        //NSString * requiredMediaType = (__bridge NSString *)kUTTypeImage;
+        NSString * requiredMediaType = (__bridge NSString *)kUTTypeImage;
         //视频
-        NSString * requiredMediaType = (__bridge NSString *)kUTTypeMovie;
+        //NSString * requiredMediaType = (__bridge NSString *)kUTTypeMovie;
         controller.mediaTypes = [[NSArray alloc]initWithObjects:requiredMediaType, nil];
         
         controller.allowsEditing = YES;
         controller.delegate = self;
         
         /*视频高质量 */
-        controller.videoQuality = UIImagePickerControllerQualityTypeHigh;
+        //controller.videoQuality = UIImagePickerControllerQualityTypeHigh;
         /* 视频记录最大10秒 */
-        controller.videoMaximumDuration = 10.0f;
+        //controller.videoMaximumDuration = 10.0f;
         
         [self presentViewController:controller animated:YES completion:nil];
         
@@ -77,10 +97,17 @@
             NSLog(@"Failed to load the data with error = %@",dataReadingError);
         }
     }else if ([mediaType isEqualToString:(__bridge NSString *)kUTTypeImage]){
-        NSDictionary * metadata = info[UIImagePickerControllerMediaMetadata];
-        UIImage * theImage = info[UIImagePickerControllerOriginalImage];
-        NSLog(@"Image Metadata = %@", metadata);
-        NSLog(@"Image = %@", theImage);
+        UIImage *theImage = nil;
+        if ([picker allowsEditing]){
+            theImage = info[UIImagePickerControllerEditedImage];
+        }else{
+            theImage = info[UIImagePickerControllerOriginalImage];
+        }
+        SEL selectorToCall = @selector(imageWasSavedSuccessfully:didFinishSavingWithError:contextInfo:);
+        UIImageWriteToSavedPhotosAlbum(theImage,
+                                       self,
+                                       selectorToCall,
+                                       NULL);
     }
     [picker dismissViewControllerAnimated:YES completion:nil];
 }

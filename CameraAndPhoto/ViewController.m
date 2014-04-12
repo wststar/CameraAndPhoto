@@ -56,18 +56,18 @@
         controller.sourceType = UIImagePickerControllerSourceTypeCamera;
         
         //照片
-        NSString * requiredMediaType = (__bridge NSString *)kUTTypeImage;
+        //NSString * requiredMediaType = (__bridge NSString *)kUTTypeImage;
         //视频
-        //NSString * requiredMediaType = (__bridge NSString *)kUTTypeMovie;
+        NSString * requiredMediaType = (__bridge NSString *)kUTTypeMovie;
         controller.mediaTypes = [[NSArray alloc]initWithObjects:requiredMediaType, nil];
         
         controller.allowsEditing = YES;
         controller.delegate = self;
         
         /*视频高质量 */
-        //controller.videoQuality = UIImagePickerControllerQualityTypeHigh;
+        controller.videoQuality = UIImagePickerControllerQualityTypeHigh;
         /* 视频记录最大10秒 */
-        //controller.videoMaximumDuration = 10.0f;
+        controller.videoMaximumDuration = 10.0f;
         
         [self presentViewController:controller animated:YES completion:nil];
         
@@ -84,18 +84,24 @@
     
     NSString * mediaType = info[UIImagePickerControllerMediaType];
     if ([mediaType isEqualToString:(__bridge NSString *)kUTTypeMovie]) {
-        NSURL * urlOfVideo = info[UIImagePickerControllerMediaURL];
-        NSLog(@"Viewo url = %@",urlOfVideo);
-        
-        NSError *dataReadingError = nil;
-        NSData *videoData =[NSData dataWithContentsOfURL:urlOfVideo
-                              options:NSDataReadingMapped
-                                error:&dataReadingError];
-        if (videoData != nil){
-            NSLog(@"Successfully loaded the data.");
+        self.assetsLibrary = [[ALAssetsLibrary alloc] init];
+        NSURL * videoURL = info[UIImagePickerControllerMediaURL];
+        NSLog(@"Viewo url = %@",videoURL);
+        if (videoURL != nil){
+            [self.assetsLibrary writeVideoAtPathToSavedPhotosAlbum:videoURL
+                               completionBlock:^(NSURL *assetURL, NSError *error) {
+                                   if (error == nil){
+                                       NSLog(@"no errors happened");
+                                   }else{
+                                       NSLog(@"Error happened while saving the video.");
+                                       NSLog(@"The error is = %@", error);
+                                   }
+                               }];
         }else{
-            NSLog(@"Failed to load the data with error = %@",dataReadingError);
+            NSLog(@"Could not find the video in the app bundle.");
+            
         }
+       
     }else if ([mediaType isEqualToString:(__bridge NSString *)kUTTypeImage]){
         UIImage *theImage = nil;
         if ([picker allowsEditing]){

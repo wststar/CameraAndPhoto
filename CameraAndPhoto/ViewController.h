@@ -8,7 +8,10 @@
 
 #import <UIKit/UIKit.h>
 #import <MobileCoreServices/MobileCoreServices.h>
+#import <AssetsLibrary/AssetsLibrary.h>
 
 @interface ViewController : UIViewController<UIImagePickerControllerDelegate,UINavigationControllerDelegate>
+
+@property (nonatomic, strong) ALAssetsLibrary *assetsLibrary;
 
 @end

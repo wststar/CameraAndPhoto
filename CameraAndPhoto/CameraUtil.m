@@ -53,12 +53,26 @@
 }
 
 +(BOOL)doesCameraSupportShootingVideos{
-    BOOL result = (BOOL)[self cameraSupportsMedia:(__bridge NSString *)kUTTypeVideo sourceType:UIImagePickerControllerSourceTypeCamera];
-    return  result;
+   return  [self cameraSupportsMedia:(__bridge NSString *)kUTTypeVideo sourceType:UIImagePickerControllerSourceTypeCamera];
 }
 
 +(BOOL) doesCameraSupportTakingPhotos{
     return [self cameraSupportsMedia:(__bridge NSString *)kUTTypeImage sourceType:UIImagePickerControllerSourceTypeCamera];
+}
+
++(BOOL) isPhotoLibraryAvailable{
+    return [UIImagePickerController isSourceTypeAvailable:
+            UIImagePickerControllerSourceTypePhotoLibrary];
+}
+
++(BOOL) canUserPickVideosFromPhotoLibrary{
+    return [self cameraSupportsMedia:(__bridge NSString *)kUTTypeMovie
+                          sourceType:UIImagePickerControllerSourceTypePhotoLibrary];
+}
+
++(BOOL) canUserPickPhotosFromPhotoLibrary{
+    return [self cameraSupportsMedia:(__bridge NSString *)kUTTypeImage
+                          sourceType:UIImagePickerControllerSourceTypePhotoLibrary];
 }
 
 

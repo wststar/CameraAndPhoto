@@ -69,5 +69,29 @@
  */
 +(BOOL) doesCameraSupportTakingPhotos;
 
+/**
+ *	@brief 是否可以访问相薄
+ *
+ *	@return
+ */
++(BOOL) isPhotoLibraryAvailable;
+
+
+/**
+ *	@brief	是否可以访问相薄视频
+ *
+ *	@return
+ */
++(BOOL) canUserPickVideosFromPhotoLibrary;
+
+
+
+/**
+ *	@brief	是否可以访问相薄图片
+ *
+ *	@return	
+ */
++(BOOL) canUserPickPhotosFromPhotoLibrary;
+
 
 @end

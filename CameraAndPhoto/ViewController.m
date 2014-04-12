@@ -150,7 +150,7 @@
     });
     */
     
-    /**加载视频**/
+    /**加载视频
     self.assetsLibrary = [[ALAssetsLibrary alloc] init]; dispatch_queue_t dispatchQueue =
     dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0); dispatch_async(dispatchQueue, ^(void) {
         [self.assetsLibrary enumerateGroupsWithTypes:ALAssetsGroupAll usingBlock:^(ALAssetsGroup *group, BOOL *stop) {
@@ -158,48 +158,48 @@
             [group enumerateAssetsUsingBlock:^(ALAsset *result,
                                                NSUInteger index,
                                                BOOL *stop) {
-                /* Get the asset type */
+                // Get the asset type //
                 NSString *assetType = [result
                                        valueForProperty:ALAssetPropertyType];
                 if ([assetType isEqualToString:ALAssetTypeVideo]){ NSLog(@"This is a video asset");
                     foundTheVideo = YES;
                     *stop = YES;
-                    /* Get the asset's representation object */
+                    //Get the asset's representation object
                     ALAssetRepresentation *assetRepresentation =
                     [result defaultRepresentation];
                     const NSUInteger BufferSize = 1024; uint8_t buffer[BufferSize]; NSUInteger bytesRead = 0;
                     long long currentOffset = 0; NSError *readingError = nil;
-                    /* Construct the path where the video has to be saved */
+                    //Construct the path where the video has to be saved
                     NSString *videoPath =
                     [[self documentFolderPath]
                      stringByAppendingPathComponent:@"Temp.MOV"];
                     NSFileManager *fileManager = [[NSFileManager alloc] init];
-                    /* Create the file if it doesn't exist already */
+                    // Create the file if it doesn't exist already
                     if ([fileManager fileExistsAtPath:videoPath] == NO){ [fileManager createFileAtPath:videoPath
                                                                                               contents:nil
                                                                                             attributes:nil];
                     }
-                    /* We will use this file handle to write the contents
-                     of the media assets to the disk */
+                    // We will use this file handle to write the contents
+                     //of the media assets to the disk
                     NSFileHandle *fileHandle =
                     [NSFileHandle
                      fileHandleForWritingAtPath:videoPath]; do{
-                        /* Read as many bytes as we can put in the buffer */
+                        //Read as many bytes as we can put in the buffer
                         bytesRead =
                         [assetRepresentation getBytes:(uint8_t *)&buffer
                                            fromOffset:currentOffset
                                                length:BufferSize
                                                 error:&readingError];
-                        /* If we couldn't read anything, we will
-                         exit this loop */
+                        //If we couldn't read anything, we will
+                         //exit this loop
                         if (bytesRead == 0){ break;
                         }
-                        /* Keep the offset up to date */
+                        // Keep the offset up to date //
                         currentOffset += bytesRead;
-                        /* Put the buffer into an NSData */
+                        /// Put the buffer into an NSData //
                         NSData *readData = [[NSData alloc] initWithBytes:(const void *)buffer
                                                                   length:bytesRead];
-                        /* And write the data to file */
+                        // And write the data to file //
                         [fileHandle writeData:readData];
                     } while (bytesRead > 0);
                     NSLog(@"Finished reading and storing the \
@@ -212,6 +212,21 @@
                                             NSLog(@"Failed to enumerate the asset groups.");
                                         }];
     });
+     **///
+    
+    /**编辑视频*/
+    self.assetsLibrary = [[ALAssetsLibrary alloc] init];
+    if ([CameraUtil isPhotoLibraryAvailable] && [CameraUtil canUserPickVideosFromPhotoLibrary]){
+        UIImagePickerController *imagePicker = [[UIImagePickerController alloc] init];
+        /* Set the source type to photo library */
+        imagePicker.sourceType = UIImagePickerControllerSourceTypePhotoLibrary;
+        /* And we want our user to be able to pick movies from the library */
+        imagePicker.mediaTypes = @[(__bridge NSString *)kUTTypeMovie];
+        /* Set the delegate to the current view controller */
+        imagePicker.delegate = self;
+        /* Present our image picker */
+        [self presentViewController:imagePicker animated:YES completion:nil];
+    }
 }
 
 #pragma mark --UIImagePickerControllerDelegate
@@ -221,24 +236,29 @@
     
     NSString * mediaType = info[UIImagePickerControllerMediaType];
     if ([mediaType isEqualToString:(__bridge NSString *)kUTTypeMovie]) {
-        self.assetsLibrary = [[ALAssetsLibrary alloc] init];
-        NSURL * videoURL = info[UIImagePickerControllerMediaURL];
-        NSLog(@"Viewo url = %@",videoURL);
-        if (videoURL != nil){
-            [self.assetsLibrary writeVideoAtPathToSavedPhotosAlbum:videoURL
-                               completionBlock:^(NSURL *assetURL, NSError *error) {
-                                   if (error == nil){
-                                       NSLog(@"no errors happened");
-                                   }else{
-                                       NSLog(@"Error happened while saving the video.");
-                                       NSLog(@"The error is = %@", error);
-                                   }
-                               }];
-        }else{
-            NSLog(@"Could not find the video in the app bundle.");
-            
-        }
-       
+        self.videoURLToEdit = info[UIImagePickerControllerMediaURL];
+        [picker dismissViewControllerAnimated:YES completion:^{
+            if (self.videoURLToEdit != nil){
+                NSString *videoPath = [self.videoURLToEdit path];
+                /* First let's make sure the video editor is able to edit the
+                 video at the path in our documents folder */
+                if ([UIVideoEditorController canEditVideoAtPath:videoPath]){
+                    /* Instantiate the video editor */
+                    UIVideoEditorController *videoEditor = [[UIVideoEditorController alloc] init];
+                    /* We become the delegate of the video editor */
+                    videoEditor.delegate = self;
+                    /* Make sure to set the path of the video */
+                    videoEditor.videoPath = videoPath;
+                    /* And present the video editor */
+                    [self presentViewController:videoEditor
+                                       animated:YES
+                                     completion:nil];
+                    self.videoURLToEdit = nil;
+                }else{
+                    NSLog(@"Cannot edit the video at this path");
+                } }
+        }];
+        
     }else if ([mediaType isEqualToString:(__bridge NSString *)kUTTypeImage]){
         UIImage *theImage = nil;
         if ([picker allowsEditing]){
@@ -251,8 +271,9 @@
                                        self,
                                        selectorToCall,
                                        NULL);
+         [picker dismissViewControllerAnimated:YES completion:nil];
     }
-    [picker dismissViewControllerAnimated:YES completion:nil];
+   
 }
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker{
@@ -270,6 +291,20 @@
      return url.path;
 }
 
+#pragma mark --UIVideoEditorControllerDelegate
+- (void)videoEditorController:(UIVideoEditorController *)editor didSaveEditedVideoToPath:(NSString *)editedVideoPath{
+    NSLog(@"The video editor finished saving video");
+    NSLog(@"The edited video path is at = %@", editedVideoPath);
+    [editor dismissViewControllerAnimated:YES completion:nil];
+}
+- (void)videoEditorController:(UIVideoEditorController *)editor didFailWithError:(NSError *)error{
+    NSLog(@"Video editor error occurred = %@", error);
+    [editor dismissViewControllerAnimated:YES completion:nil];
+}
+- (void)videoEditorControllerDidCancel:(UIVideoEditorController *)editor{
+    NSLog(@"The video editor was cancelled");
+    [editor dismissViewControllerAnimated:YES completion:nil];
+}
 
 - (void)didReceiveMemoryWarning
 {

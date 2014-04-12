@@ -10,8 +10,9 @@
 #import <MobileCoreServices/MobileCoreServices.h>
 #import <AssetsLibrary/AssetsLibrary.h>
 
-@interface ViewController : UIViewController<UIImagePickerControllerDelegate,UINavigationControllerDelegate>
+@interface ViewController : UIViewController<UIImagePickerControllerDelegate,UINavigationControllerDelegate,UIVideoEditorControllerDelegate>
 
 @property (nonatomic, strong) ALAssetsLibrary *assetsLibrary;
+@property (nonatomic, strong) NSURL *videoURLToEdit;
 
 @end
